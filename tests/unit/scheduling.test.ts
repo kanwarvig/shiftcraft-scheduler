@@ -35,6 +35,9 @@ describe("Harbour & Pine synthetic scenario", () => {
     expect(optimized.metrics.preferenceScore).toBeGreaterThan(
       greedy.metrics.preferenceScore,
     );
+    expect(optimized.metrics.preferenceSatisfactionPercent).toBeGreaterThan(
+      greedy.metrics.preferenceSatisfactionPercent,
+    );
     expect(optimized.metrics.coveragePercent).toBe(100);
     expect(optimized.diagnostics.nodesVisited).toBeGreaterThan(0);
     expect(optimized.diagnostics.solveTimeMs).toBeGreaterThanOrEqual(0);

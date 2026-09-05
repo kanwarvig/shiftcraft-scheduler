@@ -3,7 +3,7 @@ import type {
   ScheduleInput,
   ScheduleMetrics,
 } from "./types";
-import { preferenceFor, shiftHours } from "./internal";
+import { coverageUnits, isAvailable, preferenceFor, shiftHours } from "./internal";
 
 export function calculateScheduleMetrics(
   input: ScheduleInput,
@@ -14,7 +14,6 @@ export function calculateScheduleMetrics(
   const scheduledHoursByEmployee: Record<string, number> = {};
   let totalAssignedHours = 0;
   let preferenceScore = 0;
-  let maximumPreferenceMagnitude = 0;
 
   for (const assignment of assignments) {
     const employee = employees.get(assignment.employeeId);
@@ -25,8 +24,20 @@ export function calculateScheduleMetrics(
     scheduledHoursByEmployee[employee.id] =
       (scheduledHoursByEmployee[employee.id] ?? 0) + hours;
     preferenceScore += preferenceFor(employee, shift.id);
-    maximumPreferenceMagnitude += Math.abs(preferenceFor(employee, shift.id));
   }
+
+  const preferenceBounds = coverageUnits(input).reduce(
+    (bounds, unit) => {
+      const scores = input.employees
+        .filter((employee) => employee.skills.includes(unit.skill) && isAvailable(employee, unit.shift))
+        .map((employee) => preferenceFor(employee, unit.shift.id));
+      return {
+        minimum: bounds.minimum + Math.min(0, ...scores),
+        maximum: bounds.maximum + Math.max(0, ...scores),
+      };
+    },
+    { minimum: 0, maximum: 0 },
+  );
 
   const requiredCoverage = input.shifts.reduce(
     (total, shift) =>
@@ -44,13 +55,10 @@ export function calculateScheduleMetrics(
     scheduledHoursByEmployee,
     preferenceScore,
     preferenceSatisfactionPercent:
-      maximumPreferenceMagnitude === 0
+      preferenceBounds.maximum === preferenceBounds.minimum
         ? 100
-        : roundPercent(
-            ((preferenceScore + maximumPreferenceMagnitude) /
-              (2 * maximumPreferenceMagnitude)) *
-              100,
-          ),
+        : roundPercent(Math.max(0, Math.min(100, ((preferenceScore - preferenceBounds.minimum) /
+            (preferenceBounds.maximum - preferenceBounds.minimum)) * 100))),
     requiredCoverage,
     filledCoverage,
     coveragePercent:
