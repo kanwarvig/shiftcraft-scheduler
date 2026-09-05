@@ -34,9 +34,19 @@ test("supports direct routes, refresh, and browser back", async ({ page }) => {
   await page.goto("/");
   const mobileNav = page.getByRole("navigation", { name: "Mobile navigation" });
   await expect(mobileNav.getByRole("link", { name: /evidence/i })).toBeVisible();
-  const mainBox = await page.locator("main").boundingBox();
-  const navBox = await mobileNav.boundingBox();
-  expect(mainBox && navBox && mainBox.y + mainBox.height <= navBox.y + 1).toBeTruthy();
+  const layout = await page.evaluate(() => {
+    const main = document.querySelector("main");
+    const header = document.querySelector(".site-header");
+    const nav = document.querySelector(".mobile-nav");
+    return {
+      overflowY: main ? getComputedStyle(main).overflowY : "missing",
+      reservedHeight: main && header && nav
+        ? window.innerHeight - header.clientHeight - nav.clientHeight - main.clientHeight
+        : 999,
+    };
+  });
+  expect(layout.overflowY).toBe("auto");
+  expect(Math.abs(layout.reservedHeight)).toBeLessThanOrEqual(2);
   await mobileNav.getByRole("link", { name: /evidence/i }).click();
   await expect(page).toHaveURL(/\/evidence$/);
 });
