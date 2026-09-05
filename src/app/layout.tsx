@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AppShell } from "@/components/AppShell";
+import { PlannerProvider } from "@/components/PlannerState";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,18 +16,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Shiftcraft — explainable café scheduling",
+  title: {
+    default: "ShiftCraft — explainable workforce planning",
+    template: "%s · ShiftCraft",
+  },
   description:
-    "A constraint-based scheduling lab for the synthetic Harbour & Pine Café.",
+    "Build, inspect, and repair an explainable schedule for the synthetic Harbour & Pine Café.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full">{children}</body>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} data-scroll-behavior="smooth">
+      <body>
+        <PlannerProvider>
+          <AppShell>{children}</AppShell>
+        </PlannerProvider>
+      </body>
     </html>
   );
 }

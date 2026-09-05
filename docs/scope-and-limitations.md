@@ -49,7 +49,7 @@ The branch-and-bound solver can claim optimality only when it exhausts or safely
 
 ## Data and state boundary
 
-Results and edits remain only in memory for the current page session. There is no browser storage, server sync, account, access control, audit history, collaboration, or recovery service. Reloading or closing the page discards the current schedule.
+Results and edits remain only in `sessionStorage` for the current browser tab. This supports route changes and same-tab reload, but there is no durable browser storage, server sync, account, access control, audit history, collaboration, or recovery service. Closing the tab discards the current schedule.
 
 Use the bundled synthetic data only. Do not enter names, employment details, accommodation information, contact information, or other real/sensitive data.
 
@@ -59,7 +59,7 @@ Use the bundled synthetic data only. Do not enter names, employment details, acc
 - Performance varies with runtime, hardware, host load, scenario, weights, and search limits.
 - The encoded preference weights are illustrative and have not been calibrated through user research.
 - The model omits breaks, rest periods, certifications with expiry, role hierarchy, labor cost, demand forecasting, split shifts, leave workflows, and many jurisdiction-specific rules.
-- Session state is intentionally ephemeral and cannot be recovered after reload or tab close.
+- Session state is intentionally ephemeral and cannot be recovered after reset or tab close.
 - Synthetic scenarios can cover known branches but cannot represent the diversity or ambiguity of real scheduling operations.
 - Accessibility and usability still require testing with representative users and assistive technologies; automated checks alone are insufficient.
 

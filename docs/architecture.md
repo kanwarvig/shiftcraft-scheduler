@@ -14,25 +14,25 @@ flowchart LR
     D --> G[Greedy baseline]
     D --> B[Branch-and-bound solver]
     D --> V[Assignment validator]
-    UI <--> P[React session state]
+    UI <--> P[React state + sessionStorage]
     G --> R[Schedule result and metrics]
     B --> R
     V --> R
     R --> UI
 ```
 
-This is a modular Next.js application, not a distributed system. Next.js supplies the application shell, first-party route, and build pipeline. The scheduling engine is dependency-light TypeScript callable independently of React and the route. Demo state exists only in the current page session.
+This is a modular Next.js application, not a distributed system. Next.js supplies the route-level application shell, first-party route, and build pipeline. The scheduling engine is dependency-light TypeScript callable independently of React and the route. Demo state exists only in the current browser-tab session.
 
 ## Architectural boundaries
 
 | Boundary | Responsibility | Must not own |
 | --- | --- | --- |
-| Presentation | Scenario controls, schedule grid, diagnostics, metric comparison, absence and manual-edit interactions | Feasibility rules or solver search logic |
+| Presentation | Route-level overview, planning, schedule, scenario, and evidence views; contextual diagnostics and manual-edit interactions | Feasibility rules or solver search logic |
 | Application orchestration | Turn UI intent into domain operations; select scenario; run, compare, validate, and recover | Rendering details or API transport internals |
 | API contract and route | Validate either a complete caller-supplied model or a named fixture request, call domain operations, and return structured success/error JSON | Persistent state or duplicated feasibility rules |
 | Scheduling domain | Entities, time calculations, hard-rule validation, preference/disruption scoring, result metrics | Browser APIs or React state |
 | Solvers | Produce candidate assignments using a common problem/result contract | UI messages or session-state management |
-| Session state | Hold the selected scenario, results, comparisons, and manual edits until reset/reload | Durable storage or scheduling decisions |
+| Session state | Hold the selected scenario, results, comparisons, and manual edits across routes and same-tab refresh | Durable storage, cross-tab sync, or scheduling decisions |
 | Synthetic fixtures | Define the café roster and the three reproducible scenarios | Claims about real businesses or users |
 
 Dependencies point inward: the interface and API route may depend on domain/API contracts, while domain and solver modules must not import React, Next.js, or browser globals. Both solvers consume the same normalized problem and return the same result shape so the comparison is meaningful.
@@ -81,7 +81,7 @@ sequenceDiagram
     participant S as Selected solver
     participant V as Result validator
     participant M as Metrics
-    participant P as React session state
+    participant P as React state + sessionStorage
     UI->>A: Scenario, strategy, optional current assignments
     A->>N: Validate full caller input or build named fixture
     N-->>A: Input errors, if any
@@ -93,7 +93,7 @@ sequenceDiagram
     V-->>M: Feasibility and diagnostics
     M-->>A: Structured result
     A-->>UI: JSON result or error
-    UI->>P: Hold result until reset or reload
+    UI->>P: Hold result until reset or tab close
 ```
 
 The greedy solver is a baseline: it makes the best available local choice without revisiting earlier choices. The branch-and-bound solver searches alternatives deterministically, backtracks after dead ends, and prunes a branch only when its optimistic score cannot improve on the best known feasible result. Stable slot ordering, stable staff ordering, and explicit tie-breakers make identical input produce identical assignments.
@@ -104,12 +104,12 @@ Manual edits pass through the independent domain validator. Absence recovery rem
 
 ## Session state
 
-Runtime state belongs in React/application state. The current implementation intentionally has no persistence adapter:
+Runtime state belongs in React/application state. A versioned `sessionStorage` snapshot supports route transitions and same-tab refresh without becoming durable persistence:
 
-- results and manual edits remain in memory for the current page session;
-- **Reset demo** returns to the default scenario and clears results;
-- reload or tab close discards state;
-- no state is written to browser storage or a server-side store.
+- results and manual edits remain in the current browser-tab session;
+- **Reset session** returns to the default scenario and clears results;
+- same-tab reload restores the session; closing the tab discards it;
+- no state is written to a durable browser store or server-side store.
 
 There is no account, encryption layer, access control, audit log, synchronization, or backup. The interface labels edits as session-only and discourages real employee data. Any future persistence—browser-local or server-side—requires a separate schema, validation, privacy, and migration decision.
 
@@ -125,13 +125,13 @@ The project has no production telemetry pipeline. Adding analytics or persistenc
 - **Scenario tests:** feasible rush week, known keyholder gap, and barista absence recovery with expected invariants.
 - **Differential tests:** both solvers receive identical input; every claimed feasible result passes the independent validator.
 - **UI/component tests:** controls, disclosures, diagnostics, and metric rendering.
-- **End-to-end tests:** run the primary scheduling flow in a browser, exercise recovery, reset it, and confirm reload discards session state.
+- **End-to-end tests:** exercise direct routes, primary navigation, browser back, same-tab refresh, feasible generation, infeasibility, recovery, and validated manual edits.
 
 CI runs installation, linting, type checking, unit/integration tests, a production build, Playwright against the production server, and secret scanning. The same Playwright suite is also run against the exact Vercel alias before release is called verified.
 
 ## Deployment topology
 
-The deployable artifact is a single Next.js application with one scheduling route. It requires no database, queue, external optimizer, secret, or background worker for the documented demo. It must run on a host that supports the Next.js route; schedule results are returned without server-side persistence and remain only in current React session state.
+The deployable artifact is a single Next.js application with one scheduling API route and five user-facing App Router destinations. It requires no database, queue, external optimizer, secret, or background worker for the documented demo. Schedule results are returned without server-side persistence and remain only in current browser-tab session state.
 
 ## Extension rules
 

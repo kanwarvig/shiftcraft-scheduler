@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4314";
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:4314";
 const useProductionServer = Boolean(process.env.CI || process.env.PLAYWRIGHT_PRODUCTION_SERVER);
 
 export default defineConfig({

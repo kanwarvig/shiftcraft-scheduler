@@ -78,9 +78,10 @@ Use only the bundled synthetic data.
 ## Session-state check
 
 1. Change or solve the demo state.
-2. Confirm the interface labels edits as **Session only**.
-3. Select **Reset demo**; confirm the synthetic default returns and results are cleared.
-4. Change or solve the demo again, then reload; confirm the synthetic default returns and the previous result is not restored.
+2. Confirm the interface labels edits as **Session-only browser state**.
+3. Navigate between **Plan** and **Schedule**, then reload the same tab; confirm the current result is restored.
+4. Select **Reset session**; confirm the synthetic default returns and results are cleared.
+5. Close the tab and open a new one; confirm the previous tab session is not recovered.
 
 Never use real staff information for this check. Session-only state is not a system of record, backup, or collaboration mechanism.
 
@@ -115,7 +116,7 @@ Treat a suspected secret as compromised until disproven. Remove it from the chan
 | Schedule says feasible with a visible gap | Coverage normalization and independent result validation | Treat as a release blocker; do not rely on the score display |
 | Repeated input produces different assignments | Unstable iteration order or incomplete tie-breaker | Sort slots/candidates by stable identifiers and add a regression test |
 | Recovery changes too many assignments | Missing/incorrect disruption cost or existing-schedule seed | Inspect score components and before/after assignment identifiers |
-| State disappears after reload | Expected session-only behavior | Confirm the **Session only** label; do not promise persistence or recovery |
+| State disappears after same-tab reload | Session snapshot failed to restore | Inspect `shiftcraft-session-v1` in `sessionStorage`; do not promise durable recovery |
 | Solver becomes unresponsive | Search space or bound weakened | Enforce the documented limit, surface bounded termination, and reduce/test the fixture |
 
 ## Recovery and rollback
@@ -123,7 +124,7 @@ Treat a suspected secret as compromised until disproven. Remove it from the chan
 Because there is no persisted user data, application rollback and session reset are separate:
 
 - Roll back the deployment using the hosting provider's previous known-good artifact.
-- Ask the user to reload or use **Reset demo** when current session state is inconsistent. Do not promise recovery after either action.
+- Ask the user to use **Reset session** when current session state is inconsistent. Reload may restore the same snapshot; do not promise recovery after reset or tab close.
 - If only one scenario or solver is defective, do not hide invalid results behind a successful build; disable the affected path or restore the previous known-good release.
 - After rollback, repeat the manual scenarios on the exact public URL and record which commit/artifact was verified.
 
