@@ -11,7 +11,9 @@ export function createScenarioInput(scenario: ScenarioId): ScheduleInput {
     input.shifts.find((shift) =>
       shift.coverage.some((requirement) => requirement.skill === "keyholder"),
     ) ?? input.shifts[0];
-  const targetSkill = targetShift.coverage[0]?.skill;
+  const targetSkill =
+    targetShift.coverage.find((requirement) => requirement.skill === "keyholder")?.skill ??
+    targetShift.coverage[0]?.skill;
 
   return {
     ...input,

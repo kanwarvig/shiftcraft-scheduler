@@ -11,6 +11,7 @@ import {
   createHarbourPineScenario,
   HARBOUR_PINE_CAFE_NAME,
 } from "../../src/lib/data";
+import { createScenarioInput } from "../../src/lib/scenario";
 
 describe("Harbour & Pine synthetic scenario", () => {
   it("is named, fixed, and returned as a fresh object", () => {
@@ -93,6 +94,16 @@ describe("Harbour & Pine synthetic scenario", () => {
     expect(result.status).toBe("search_limit");
     expect(result.diagnostics.termination).toBe("max_nodes");
     expect(result.diagnostics.optimality).toBe("unknown");
+  });
+
+  it("builds the guided gap around the required keyholder role", () => {
+    const result = solveSchedule(createScenarioInput("infeasible"));
+
+    expect(result.status).toBe("infeasible");
+    if (result.status !== "infeasible") throw new Error("Expected infeasible result");
+    expect(result.reasons).toEqual(expect.arrayContaining([
+      expect.objectContaining({ shiftId: "mon-breakfast", skill: "keyholder" }),
+    ]));
   });
 });
 
